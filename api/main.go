@@ -43,6 +43,7 @@ func main() {
 		return ctx.JSON(fiber.Map{"ping": "pong"})
 	})
 	app.Get("/products", routes.GetAllProducts(db))
+	app.Post("/products", routes.CreateProduct(db))
 	err := app.Listen(":3000")
 	if err != nil {
 		log.WithError(err).Fatal("Something went wrong starting server in port 3000")
