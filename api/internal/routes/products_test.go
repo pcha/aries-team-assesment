@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
@@ -10,7 +11,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 )
@@ -48,69 +48,82 @@ func TestGetAllProducts(t *testing.T) {
 	}
 }
 
-func TestCreateProduct_OK(t *testing.T) {
-	db, mockDb, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Couldn't start mock db. %s", err)
+func TestCreateProductK(t *testing.T) {
+	type mockDB struct {
+		useMock           bool
+		expectName        string
+		expectDescription string
+		mockLastInsertID  int64
+		mockRowsAffected  int64
+		mockErr           error
 	}
-	defer db.Close()
-	app := fiber.New()
-	app.Post("/products", CreateProduct(sqlx.NewDb(db, "mysql")))
-
-	mockDb.ExpectExec("INSERT INTO `products`").WithArgs("test product", "It is a test product", sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	req := httptest.NewRequest("POST", "/products", strings.NewReader(`{
+	type testCase struct {
+		reqBody        []byte
+		mockDB         mockDB
+		wantStatusCode int
+	}
+	cases := map[string]testCase{
+		"success": {
+			reqBody: []byte(`{
 	"name": "test product",
 	"description": "It is a test product"
-}`))
-	res, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("Error on faking request. %s", err)
-	}
-	if res.StatusCode != http.StatusCreated {
-		t.Errorf("Status code isn't %d, got %d instead", http.StatusCreated, res.StatusCode)
-	}
-}
-
-func TestCreateProduct_InvalidRequest(t *testing.T) {
-	db, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Couldn't start mock db. %s", err)
-	}
-	defer db.Close()
-	app := fiber.New()
-	app.Post("/products", CreateProduct(sqlx.NewDb(db, "mysql")))
-
-	req := httptest.NewRequest("POST", "/products", strings.NewReader(`{
+}`),
+			mockDB: mockDB{
+				useMock:           true,
+				expectName:        "test product",
+				expectDescription: "It is a test product",
+				mockLastInsertID:  2,
+				mockRowsAffected:  1,
+				mockErr:           nil,
+			},
+			wantStatusCode: http.StatusCreated,
+		},
+		"invalid body": {
+			reqBody:        []byte(""),
+			mockDB:         mockDB{},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		"DB error": {
+			reqBody: []byte(`{
 	"name": "test product",
-"description": 123
-}`))
-	res, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("Error on faking request. %s", err)
+	"description": "It is a test product"
+}`),
+			mockDB: mockDB{
+				useMock:           true,
+				expectName:        "test product",
+				expectDescription: "It is a test product",
+				mockLastInsertID:  0,
+				mockRowsAffected:  0,
+				mockErr:           errors.New("db err"),
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
 	}
-	if res.StatusCode != http.StatusBadRequest {
-		t.Errorf("Status code isn't %d, got %d instead", http.StatusBadRequest, res.StatusCode)
-	}
-}
 
-func TestCreateProduct_DBError(t *testing.T) {
-	db, mockDb, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Couldn't start mock db. %s", err)
-	}
-	defer db.Close()
-	app := fiber.New()
-	app.Post("/products", CreateProduct(sqlx.NewDb(db, "mysql")))
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			db, mockDb, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("Couldn't start mock db. %s", err)
+			}
+			defer db.Close()
+			app := fiber.New()
+			app.Post("/products", CreateProduct(sqlx.NewDb(db, "mysql")))
 
-	mockDb.ExpectExec("INSERT INTO `products`").WithArgs("test product", "It is a test product", sqlmock.AnyArg()).WillReturnError(errors.New("db error"))
-	req := httptest.NewRequest("POST", "/products", strings.NewReader(`{
-	"name": "test product"
-}`))
-	res, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("Error on faking request. %s", err)
-	}
-	if res.StatusCode != http.StatusInternalServerError {
-		t.Errorf("Status code isn't %d, got %d instead", http.StatusInternalServerError, res.StatusCode)
+			if tc.mockDB.useMock {
+				mockDb.ExpectExec("INSERT INTO `products`").
+					WithArgs(tc.mockDB.expectName, tc.mockDB.expectDescription, sqlmock.AnyArg()).
+					WillReturnResult(sqlmock.NewResult(tc.mockDB.mockLastInsertID, tc.mockDB.mockRowsAffected)).
+					WillReturnError(tc.mockDB.mockErr)
+			}
+			req := httptest.NewRequest("POST", "/products", bytes.NewReader(tc.reqBody))
+			res, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("Error on faking request. %s", err)
+			}
+			if res.StatusCode != tc.wantStatusCode {
+				t.Errorf("Status code isn't %d, got %d instead", tc.wantStatusCode, res.StatusCode)
+			}
+		})
 	}
 }
