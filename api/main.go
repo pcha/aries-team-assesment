@@ -3,6 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/software-advice/aries-team-assessment/internal/platform/mysql"
+	"github.com/software-advice/aries-team-assessment/internal/platform/routes"
+	"github.com/software-advice/aries-team-assessment/internal/products/creation"
+	"github.com/software-advice/aries-team-assessment/internal/products/listing"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -10,7 +14,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
-	"github.com/software-advice/aries-team-assessment/internal/routes"
 )
 
 func connectDatabase() *sqlx.DB {
@@ -38,14 +41,17 @@ func loadEnvVars() {
 func main() {
 	loadEnvVars()
 	db := connectDatabase()
+	productsRepository := mysql.NewProductRepository(db)
+	productCreationService := creation.BuildService(productsRepository)
+	productsListingService := listing.BuildService(productsRepository)
 
 	app := fiber.New()
 	app.Use(cors.New()) //TODO: explicit?
 	app.Get("/ping", func(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{"ping": "pong"})
 	})
-	app.Get("/products", routes.GetAllProducts(db))
-	app.Post("/products", routes.CreateProduct(db))
+	app.Get("/products", routes.GetAllProducts(productsListingService))
+	app.Post("/products", routes.CreateProduct(productCreationService))
 	err := app.Listen(":3000")
 	if err != nil {
 		log.WithError(err).Fatal("Something went wrong starting server in port 3000")

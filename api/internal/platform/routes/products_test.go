@@ -8,6 +8,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/software-advice/aries-team-assessment/internal/platform/mysql"
+	"github.com/software-advice/aries-team-assessment/internal/products/creation"
+	"github.com/software-advice/aries-team-assessment/internal/products/listing"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,9 +25,11 @@ func TestGetAllProducts(t *testing.T) {
 		t.Fatalf("Couldn't start mock db. %s", err)
 	}
 	defer db.Close()
+	repository := mysql.NewProductRepository(sqlx.NewDb(db, "mysql"))
+	service := listing.BuildService(repository)
 
 	app := fiber.New()
-	app.Get("/products", GetAllProducts(sqlx.NewDb(db, "mysql")))
+	app.Get("/products", GetAllProducts(service))
 
 	mockDb.ExpectQuery("SELECT *").WillReturnRows(
 		sqlmock.NewRows([]string{"id", "name", "description", "created_at"}).
@@ -107,8 +112,10 @@ func TestCreateProductK(t *testing.T) {
 				t.Fatalf("Couldn't start mock db. %s", err)
 			}
 			defer db.Close()
+			repository := mysql.NewProductRepository(sqlx.NewDb(db, "mysql"))
+			service := creation.BuildService(repository)
 			app := fiber.New()
-			app.Post("/products", CreateProduct(sqlx.NewDb(db, "mysql")))
+			app.Post("/products", CreateProduct(service))
 
 			if tc.mockDB.useMock {
 				mockDb.ExpectExec("INSERT INTO `products`").
