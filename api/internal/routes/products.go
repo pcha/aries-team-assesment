@@ -45,7 +45,7 @@ func CreateProduct(db *sqlx.DB) fiber.Handler {
 		prd := Product{
 			Name:        npReq.Name,
 			Description: npReq.Description,
-			CreatedAt:   time.Time{},
+			CreatedAt:   time.Now(),
 		}
 		_, err = db.NamedExec("INSERT INTO `products` (`name`, `description`, `created_at`) VALUES (:name, :description, :created_at)", prd)
 		if err != nil {

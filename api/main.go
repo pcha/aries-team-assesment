@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -39,6 +40,7 @@ func main() {
 	db := connectDatabase()
 
 	app := fiber.New()
+	app.Use(cors.New()) //TODO: explicit?
 	app.Get("/ping", func(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{"ping": "pong"})
 	})
