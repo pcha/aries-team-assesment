@@ -88,6 +88,22 @@ func TestCreateProductK(t *testing.T) {
 			mockDB:         mockDB{},
 			wantStatusCode: http.StatusBadRequest,
 		},
+		"empty name": {
+			reqBody: []byte(`{
+	"name": "",
+	"description": "It is a test product"
+}`),
+			mockDB:         mockDB{},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		"empty description": {
+			reqBody: []byte(`{
+	"name": "test product",
+	"description": ""
+}`),
+			mockDB:         mockDB{},
+			wantStatusCode: http.StatusBadRequest,
+		},
 		"DB error": {
 			reqBody: []byte(`{
 	"name": "test product",
