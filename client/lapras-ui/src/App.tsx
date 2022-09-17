@@ -1,7 +1,7 @@
 import './App.css'
 import ProductsList from "./products/list";
 import ProductCreator from "./products/create"
-import Products from "./products/container";
+import Products from "./products/main";
 
 function App() {
 
