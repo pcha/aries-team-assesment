@@ -35,6 +35,21 @@ func (p ProductRepository) GetAll(ctx context.Context) ([]products.Product, erro
 	return prods, nil
 }
 
+func (p ProductRepository) Search(ctx context.Context, term string) ([]products.Product, error) {
+	var result []Product
+	wildcardedTerm := "%" + term + "%"
+	err := p.db.SelectContext(ctx, &result, "SELECT * FROM `products` WHERE `name` LIKE ? OR  `description` LIKE ? ORDER BY `name`", wildcardedTerm, wildcardedTerm)
+	if err != nil {
+		return nil, err
+	}
+	prods := make([]products.Product, len(result))
+	for i, dto := range result {
+		prod := products.BuildFrom(dto.ID, dto.Name, dto.Description, dto.CreatedAt)
+		prods[i] = prod
+	}
+	return prods, nil
+}
+
 // Save writes the info in the table products
 func (p ProductRepository) Save(ctx context.Context, product products.Product) (products.ID, error) {
 	//TODO implement me

@@ -17,6 +17,11 @@ func (p *ProductRepository) GetAll(ctx context.Context) ([]products.Product, err
 	return args.Get(0).([]products.Product), args.Error(1)
 }
 
+func (p *ProductRepository) Search(ctx context.Context, term string) ([]products.Product, error) {
+	args := p.Called(ctx, term)
+	return args.Get(0).([]products.Product), args.Error(1)
+}
+
 // Save mocks the saving of a product
 func (p *ProductRepository) Save(ctx context.Context, product products.Product) (products.ID, error) {
 	args := p.Called(ctx, product)

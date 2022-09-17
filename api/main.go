@@ -7,6 +7,7 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/platform/routes"
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
+	"github.com/software-advice/aries-team-assessment/internal/products/searching"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -44,6 +45,7 @@ func main() {
 	productsRepository := mysql.NewProductRepository(db)
 	productCreationService := creation.BuildService(productsRepository)
 	productsListingService := listing.BuildService(productsRepository)
+	productsSearchService := searching.BuildService(productsRepository)
 
 	app := fiber.New()
 	app.Use(cors.New()) //TODO: explicit?
@@ -52,6 +54,7 @@ func main() {
 	})
 	app.Get("/products", routes.GetAllProducts(productsListingService))
 	app.Post("/products", routes.CreateProduct(productCreationService))
+	app.Get("/products/search", routes.SearchProducts(productsSearchService))
 	err := app.Listen(":3000")
 	if err != nil {
 		log.WithError(err).Fatal("Something went wrong starting server in port 3000")

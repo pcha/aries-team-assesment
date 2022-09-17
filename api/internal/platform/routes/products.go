@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
+	"github.com/software-advice/aries-team-assessment/internal/products/searching"
 	"net/http"
 	"time"
 )
@@ -35,12 +36,20 @@ type ProductCreatedResponse struct {
 	ID int64 `json:"id"`
 }
 
+var internalErrorResponse = ErrorResponse{
+	Error: "internal error",
+}
+
 // GetAllProducts is the handler to return all the products.
 func GetAllProducts(service listing.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		prods, err := service.List(ctx.Context())
 		if err != nil {
 			log.WithError(err).Error("Can't get products from DB :(")
+
+			return ctx.
+				Status(http.StatusInternalServerError).
+				JSON(internalErrorResponse)
 		}
 		res := make([]Product, len(prods))
 		for i, prod := range prods {
@@ -51,7 +60,9 @@ func GetAllProducts(service listing.Service) fiber.Handler {
 				CreatedAt:   prod.CreatedAt().Time(),
 			}
 		}
-		return ctx.JSON(res)
+		return ctx.
+			Status(http.StatusOK).
+			JSON(res)
 	}
 }
 
@@ -88,4 +99,39 @@ func CreateProduct(service creation.Service) fiber.Handler {
 				ID: id.Int64(),
 			})
 	}
+}
+
+func SearchProducts(service searching.Service) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+
+		term := ctx.Query("q")
+		prods, err := service.Search(ctx.Context(), term)
+		if err != nil {
+			if errors.Is(err, searching.ErrEmptyTerm) {
+				return ctx.
+					Status(http.StatusBadRequest).
+					JSON(ErrorResponse{
+						Error: err.Error(),
+					})
+			}
+			log.WithError(err).Error("Can't get products from DB :(")
+			return ctx.
+				Status(http.StatusInternalServerError).
+				JSON(internalErrorResponse)
+		}
+
+		res := make([]Product, len(prods))
+		for i, prod := range prods {
+			res[i] = Product{
+				Id:          prod.ID().Int64(),
+				Name:        prod.Name().String(),
+				Description: prod.Description().String(),
+				CreatedAt:   prod.CreatedAt().Time(),
+			}
+		}
+		return ctx.
+			Status(http.StatusOK).
+			JSON(res)
+	}
+
 }
