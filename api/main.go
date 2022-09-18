@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/software-advice/aries-team-assessment/internal/platform/jwt"
 	"github.com/software-advice/aries-team-assessment/internal/platform/mysql"
 	"github.com/software-advice/aries-team-assessment/internal/platform/routes"
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
 	"github.com/software-advice/aries-team-assessment/internal/products/searching"
+	"github.com/software-advice/aries-team-assessment/internal/users/login"
+	"github.com/software-advice/aries-team-assessment/internal/users/tokenvalidation"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -39,10 +42,23 @@ func loadEnvVars() {
 	}
 }
 
+func setupTokenManager() jwt.HS256Manager {
+	key := []byte(os.Getenv("HS265_KEY"))
+	tokenManager, err := jwt.BuildHS256Manager(key)
+	if err != nil {
+		log.WithError(err).Fatal("Can't build the token manager")
+	}
+	return tokenManager
+}
+
 func main() {
 	loadEnvVars()
 	db := connectDatabase()
+	tokenManager := setupTokenManager()
+	usersRepository := mysql.NewUsersRepository(db)
 	productsRepository := mysql.NewProductRepository(db)
+	usersLoginService := login.BuildService(usersRepository, tokenManager)
+	tokenValidationService := tokenvalidation.BuildService(tokenManager)
 	productCreationService := creation.BuildService(productsRepository)
 	productsListingService := listing.BuildService(productsRepository)
 	productsSearchService := searching.BuildService(productsRepository)
@@ -52,9 +68,11 @@ func main() {
 	app.Get("/ping", func(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{"ping": "pong"})
 	})
-	app.Get("/products", routes.GetAllProducts(productsListingService))
-	app.Post("/products", routes.CreateProduct(productCreationService))
-	app.Get("/products/search", routes.SearchProducts(productsSearchService))
+	app.Post("/users/login", routes.Login(usersLoginService))
+	products := app.Group("/products", routes.VerifyToken(tokenValidationService))
+	products.Get("/", routes.GetAllProducts(productsListingService))
+	products.Post("/", routes.CreateProduct(productCreationService))
+	products.Get("/search", routes.SearchProducts(productsSearchService))
 	err := app.Listen(":3000")
 	if err != nil {
 		log.WithError(err).Fatal("Something went wrong starting server in port 3000")

@@ -306,3 +306,17 @@ VALUES ('eShipz',
 INSERT INTO products(name, description)
 VALUES ('24SevenOffice - Project Management',
         '24SevenOffice is a cloud-based Accounting and ERP system for small and mid-sized businesses. 24SevenOffice eliminates repetitive processes and greatly reduces the need to manually enter information. The system will also streamline business processes and makes it easier and more efficient for companies to collect data. 24SevenOffice has a wide range of powerful and comprehensive modules to run your business operations. It includes functionality for accounting (AI-powered), CRM, project management & time tracking, invoicing, reporting, e-mail and more. All modules are seamlessly integrated and highly customizable.With a modular approach, 24SevenOffice can be customized to meet your specific needs and not having to pay for unneeded extras. The system can also adapt to the ever-changing needs of a growing business, ensuring you won’t have to buy a new solution once your needs change or your business grows. With 24SevenOffice you get a powerful, scalable and flexible Accounting and ERP system in the cloud.The fully integrated finance and accounting system deal with everything from invoicing to authentication and allows you to customize receipt and workflow to your specific business needs. 24SevenOffice will provide you with top modern features to ensure that you keep up with the competition and the latest trends in the accounting industry.');
+
+
+CREATE TABLE `users` (
+     `id`          INT         NOT NULL AUTO_INCREMENT,
+     `username`        VARCHAR(50) NOT NULL,
+     `password_hash` VARCHAR(500),
+     `created_at`  DATETIME DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (`id`)
+     CONSTRAINT `username` UNIQUE(`username`)
+)
+
+INSERT INTO users(username, password)
+    VALUES('test',
+    '$2a$10$Vq8Tx8eLAFevAULXWtfJXOFFh6eMAMgJ4rQwPett62hO6.6zCJ9eW')
