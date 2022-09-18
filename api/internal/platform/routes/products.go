@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/software-advice/aries-team-assessment/internal/products"
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
 	"github.com/software-advice/aries-team-assessment/internal/products/searching"
@@ -51,15 +52,7 @@ func GetAllProducts(service listing.Service) fiber.Handler {
 				Status(http.StatusInternalServerError).
 				JSON(internalErrorResponse)
 		}
-		res := make([]Product, len(prods))
-		for i, prod := range prods {
-			res[i] = Product{
-				Id:          prod.ID().Int64(),
-				Name:        prod.Name().String(),
-				Description: prod.Description().String(),
-				CreatedAt:   prod.CreatedAt().Time(),
-			}
-		}
+		res := parseProductsList(prods)
 		return ctx.
 			Status(http.StatusOK).
 			JSON(res)
@@ -79,7 +72,6 @@ func CreateProduct(service creation.Service) fiber.Handler {
 		id, err := service.Create(ctx.Context(), npReq.Name, npReq.Description)
 
 		if err != nil {
-			log.WithError(err).Error("Couldn't create product.")
 			if errors.Is(err, creation.ErrMakingProduct) {
 				return ctx.
 					Status(http.StatusBadRequest).
@@ -87,6 +79,7 @@ func CreateProduct(service creation.Service) fiber.Handler {
 						Error: err.Error(),
 					})
 			}
+			log.WithError(err).Error("Couldn't create product.")
 			return ctx.
 				Status(http.StatusInternalServerError).
 				JSON(ErrorResponse{
@@ -120,18 +113,23 @@ func SearchProducts(service searching.Service) fiber.Handler {
 				JSON(internalErrorResponse)
 		}
 
-		res := make([]Product, len(prods))
-		for i, prod := range prods {
-			res[i] = Product{
-				Id:          prod.ID().Int64(),
-				Name:        prod.Name().String(),
-				Description: prod.Description().String(),
-				CreatedAt:   prod.CreatedAt().Time(),
-			}
-		}
+		res := parseProductsList(prods)
 		return ctx.
 			Status(http.StatusOK).
 			JSON(res)
 	}
 
+}
+
+func parseProductsList(prods []products.Product) []Product {
+	res := make([]Product, len(prods))
+	for i, prod := range prods {
+		res[i] = Product{
+			Id:          prod.ID().Int64(),
+			Name:        prod.Name().String(),
+			Description: prod.Description().String(),
+			CreatedAt:   prod.CreatedAt().Time(),
+		}
+	}
+	return res
 }
