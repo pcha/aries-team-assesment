@@ -95,10 +95,11 @@ func RenewToken(service tokenrenew.Service) fiber.Handler {
 		claims, ok := claimsVal.(users.Claims)
 		if !ok {
 			log.Errorf("invalid claims value: %v", claimsVal)
+			return sendInternalErrorResponse(ctx)
 		}
 		tkn, err := service.GetToken(claims)
 		if err != nil {
-			return setInternalErrorResponde(ctx)
+			return sendInternalErrorResponse(ctx)
 		}
 		return sendTokenResponse(ctx, tkn)
 	}

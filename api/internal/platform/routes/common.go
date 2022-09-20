@@ -14,6 +14,6 @@ var internalErrorResponse = ErrorResponse{
 	Error: "internal error",
 }
 
-func setInternalErrorResponde(ctx *fiber.Ctx) error {
+func sendInternalErrorResponse(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusInternalServerError).JSON(internalErrorResponse)
 }

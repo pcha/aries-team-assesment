@@ -22,7 +22,7 @@ func VerifyToken(service tokenvalidation.Service) fiber.Handler {
 		if err != nil {
 			return ctx.Status(http.StatusUnauthorized).JSON(ErrorResponse{Error: "invalid token"})
 		}
-		ctx.SetUserContext(context.WithValue(ctx.UserContext(), ctxClaimsKey, claims.Username()))
+		ctx.SetUserContext(context.WithValue(ctx.UserContext(), ctxClaimsKey, claims))
 		return ctx.Next()
 	}
 }
