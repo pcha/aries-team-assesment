@@ -9,8 +9,10 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
 	"github.com/software-advice/aries-team-assessment/internal/products/searching"
+	"github.com/software-advice/aries-team-assessment/internal/users"
 	"github.com/software-advice/aries-team-assessment/internal/users/login"
 	"github.com/software-advice/aries-team-assessment/internal/users/signup"
+	"github.com/software-advice/aries-team-assessment/internal/users/tokenrenew"
 	"github.com/software-advice/aries-team-assessment/internal/users/tokenvalidation"
 	"os"
 
@@ -59,11 +61,15 @@ func main() {
 	usersRepository := mysql.NewUsersRepository(db)
 	productsRepository := mysql.NewProductRepository(db)
 	userSignUpService := signup.BuildService(usersRepository)
-	usersLoginService := login.BuildService(usersRepository, tokenManager)
+	tokenGenerationService := users.BuildTokenGenerationService(tokenManager)
+	usersLoginService := login.BuildService(usersRepository, tokenGenerationService)
 	tokenValidationService := tokenvalidation.BuildService(tokenManager)
+	tokenRenewService := tokenrenew.BuildService(tokenGenerationService)
 	productCreationService := creation.BuildService(productsRepository)
 	productsListingService := listing.BuildService(productsRepository)
 	productsSearchService := searching.BuildService(productsRepository)
+
+	verifyTokenMiddleware := routes.VerifyToken(tokenValidationService)
 
 	app := fiber.New()
 	app.Use(cors.New()) //TODO: explicit?
@@ -72,7 +78,8 @@ func main() {
 	})
 	app.Post("/users", routes.SignUp(userSignUpService))
 	app.Post("/users/login", routes.Login(usersLoginService))
-	products := app.Group("/products", routes.VerifyToken(tokenValidationService))
+	app.Post("/users/token/renew", verifyTokenMiddleware, routes.RenewToken(tokenRenewService))
+	products := app.Group("/products", verifyTokenMiddleware)
 	products.Get("/", routes.GetAllProducts(productsListingService))
 	products.Post("/", routes.CreateProduct(productCreationService))
 	products.Get("/search", routes.SearchProducts(productsSearchService))

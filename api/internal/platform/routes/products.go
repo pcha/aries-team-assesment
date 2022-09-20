@@ -27,18 +27,9 @@ type CreateProductRequest struct {
 	Description string `json:"description"`
 }
 
-// ErrorResponse represents the response to return if something fails.
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
 // ProductCreatedResponse represents the response to return if a product is created successfully.
 type ProductCreatedResponse struct {
 	ID int64 `json:"id"`
-}
-
-var internalErrorResponse = ErrorResponse{
-	Error: "internal error",
 }
 
 // GetAllProducts is the handler to return all the products.

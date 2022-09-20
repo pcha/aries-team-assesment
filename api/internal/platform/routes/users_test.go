@@ -1,14 +1,19 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/software-advice/aries-team-assessment/internal/platform/jwt"
+	mocked "github.com/software-advice/aries-team-assessment/internal/platform/mockable"
 	"github.com/software-advice/aries-team-assessment/internal/platform/mysql"
+	"github.com/software-advice/aries-team-assessment/internal/users"
 	"github.com/software-advice/aries-team-assessment/internal/users/login"
+	"github.com/software-advice/aries-team-assessment/internal/users/tokenrenew"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
@@ -25,8 +30,9 @@ func TestLogin(t *testing.T) {
 	repo := mysql.NewUsersRepository(sqlx.NewDb(db, "mysql"))
 	testKey := []byte("testKey")
 	tknGen, err := jwt.BuildHS256Manager(testKey)
+	tknGenSrvc := users.BuildTokenGenerationService(tknGen)
 	require.NoError(t, err)
-	service := login.BuildService(repo, tknGen)
+	service := login.BuildService(repo, tknGenSrvc)
 
 	app := fiber.New()
 	app.Post("/users/login", Login(service))
@@ -47,10 +53,40 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	rawResBody, _ := io.ReadAll(res.Body)
-	var parsedRes LoginResponse
+	var parsedRes TokenResponse
 	err = json.Unmarshal(rawResBody, &parsedRes)
 	require.NoError(t, err)
 	tkn := parsedRes.Token
 	assert.NotEmpty(t, tkn)
 	assert.NoError(t, mockDb.ExpectationsWereMet())
+}
+
+func TestRenewToken(t *testing.T) {
+	mockTokenGen := new(mocked.TokenGenerator)
+	service := tokenrenew.BuildService(users.BuildTokenGenerationService(mockTokenGen))
+
+	app := fiber.New()
+	testUsername := "testUsername"
+	testClaims := users.BuildClaims(users.ParseUnsafeUsername(testUsername), time.Now())
+	var fakeVerifiedTkn fiber.Handler = func(ctx *fiber.Ctx) error {
+		ctx.SetUserContext(context.WithValue(ctx.UserContext(), ctxClaimsKey, testClaims))
+		return ctx.Next()
+	}
+	app.Post("/users/token/renew", fakeVerifiedTkn, RenewToken(service))
+	req := httptest.NewRequest(http.MethodPost, "/users/token/renew", nil)
+
+	testTkn := "test-token"
+	mockTokenGen.On("Generate", mock.MatchedBy(func(claims users.Claims) bool {
+		return claims.Username().String() == testUsername &&
+			claims.ExpiresAt().After(time.Now())
+	})).Return(users.ParseTokenString(testTkn), nil)
+
+	res, err := app.Test(req)
+	require.NoError(t, err)
+	var parsedBody TokenResponse
+	bodyBytes, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	err = json.Unmarshal(bodyBytes, &parsedBody)
+	require.NoError(t, err)
+	assert.Equal(t, testTkn, parsedBody.Token)
 }

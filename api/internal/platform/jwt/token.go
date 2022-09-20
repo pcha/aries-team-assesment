@@ -18,7 +18,7 @@ type Claims struct {
 	Username string
 }
 
-func (m HS256Manager) Generate(claims users.Claims) (users.Token, error) {
+func (m HS256Manager) Generate(claims users.Claims) (users.TokenString, error) {
 	tkn := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(claims.ExpiresAt()),
@@ -27,13 +27,13 @@ func (m HS256Manager) Generate(claims users.Claims) (users.Token, error) {
 	})
 	strTkn, err := tkn.SignedString(m.key)
 	if err != nil {
-		return users.Token{}, fmt.Errorf("%w: %v", ErrSigningToken, err)
+		return users.TokenString{}, fmt.Errorf("%w: %v", ErrSigningToken, err)
 	}
-	authTnk := users.ParseToken(strTkn)
+	authTnk := users.ParseTokenString(strTkn)
 	return authTnk, nil
 }
 
-func (m HS256Manager) Validate(token users.Token) (users.Claims, error) {
+func (m HS256Manager) Validate(token users.TokenString) (users.Claims, error) {
 	var claims = Claims{}
 	_, err := jwt.ParseWithClaims(token.String(), &claims, func(_ *jwt.Token) (interface{}, error) {
 		return m.key, nil
@@ -41,7 +41,7 @@ func (m HS256Manager) Validate(token users.Token) (users.Claims, error) {
 	if err != nil {
 		return users.NotClaims, err
 	}
-	return users.BuildClaims(users.BuildFrom(claims.Username, nil)), nil
+	return users.BuildClaims(users.ParseUnsafeUsername(claims.Username), claims.ExpiresAt.Time), nil
 }
 
 func BuildHS256Manager(key []byte) (HS256Manager, error) {

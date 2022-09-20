@@ -1,12 +1,15 @@
 package routes
 
 import (
+	"context"
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/software-advice/aries-team-assessment/internal/users/tokenvalidation"
 	"net/http"
 	"strings"
 )
+
+const ctxClaimsKey = "claims"
 
 func VerifyToken(service tokenvalidation.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
@@ -15,10 +18,11 @@ func VerifyToken(service tokenvalidation.Service) fiber.Handler {
 		if err != nil {
 			return ctx.Status(http.StatusUnauthorized).JSON(ErrorResponse{Error: err.Error()})
 		}
-		_, err = service.Validate(tkn)
+		claims, err := service.Validate(tkn)
 		if err != nil {
 			return ctx.Status(http.StatusUnauthorized).JSON(ErrorResponse{Error: "invalid token"})
 		}
+		ctx.SetUserContext(context.WithValue(ctx.UserContext(), ctxClaimsKey, claims.Username()))
 		return ctx.Next()
 	}
 }

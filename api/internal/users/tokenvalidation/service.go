@@ -7,7 +7,7 @@ type Service struct {
 }
 
 func (s Service) Validate(token string) (users.Claims, error) {
-	tkn := users.ParseToken(token)
+	tkn := users.ParseTokenString(token)
 	claims, err := s.validator.Validate(tkn)
 	if err != nil {
 		return users.NotClaims, err

@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/software-advice/aries-team-assessment/internal/users"
 	"github.com/software-advice/aries-team-assessment/internal/users/login"
 	"github.com/software-advice/aries-team-assessment/internal/users/signup"
+	"github.com/software-advice/aries-team-assessment/internal/users/tokenrenew"
 	"net/http"
+	"time"
 )
 
 type LoginRequest struct {
@@ -20,8 +23,13 @@ type SignUpRequest struct {
 	Password string `json:"password"`
 }
 
-type LoginResponse struct {
-	Token string `json:"token"`
+type Claims struct {
+	Username string `json:"username"`
+}
+
+type TokenResponse struct {
+	Token  string `json:"token"`
+	Claims Claims `json:"claims"`
 }
 
 func Login(service login.Service) fiber.Handler {
@@ -49,7 +57,7 @@ func Login(service login.Service) fiber.Handler {
 					Error: "internal error",
 				})
 		}
-		return ctx.Status(http.StatusOK).JSON(LoginResponse{Token: tkn.String()})
+		return sendTokenResponse(ctx, tkn)
 	}
 }
 
@@ -79,4 +87,31 @@ func SignUp(service signup.Service) fiber.Handler {
 		ctx.Status(http.StatusCreated)
 		return nil
 	}
+}
+
+func RenewToken(service tokenrenew.Service) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		claimsVal := ctx.UserContext().Value(ctxClaimsKey)
+		claims, ok := claimsVal.(users.Claims)
+		if !ok {
+			log.Errorf("invalid claims value: %v", claimsVal)
+		}
+		tkn, err := service.GetToken(claims)
+		if err != nil {
+			return setInternalErrorResponde(ctx)
+		}
+		return sendTokenResponse(ctx, tkn)
+	}
+}
+
+func sendTokenResponse(ctx *fiber.Ctx, tkn users.Token) error {
+	ctx.Set(fiber.HeaderExpires, tkn.Claims().ExpiresAt().Format(time.RFC1123))
+	return ctx.
+		Status(http.StatusOK).
+		JSON(TokenResponse{
+			Token: tkn.TokenString().String(),
+			Claims: Claims{
+				Username: tkn.Claims().Username().String(),
+			},
+		})
 }

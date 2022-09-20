@@ -15,7 +15,8 @@ func TestService_Login(t *testing.T) {
 	repo := new(mockable.UsersRepository)
 	tknGen, err := jwt.BuildHS256Manager([]byte("testKey"))
 	require.NoError(t, err)
-	service := BuildService(repo, tknGen)
+	tknGenSrvc := users.BuildTokenGenerationService(tknGen)
+	service := BuildService(repo, tknGenSrvc)
 
 	username := "test"
 	pass := []byte("asd123")
@@ -28,6 +29,6 @@ func TestService_Login(t *testing.T) {
 
 	tkn, err := service.Login(context.Background(), username, pass)
 	require.NoError(t, err)
-	assert.NotEmpty(t, tkn.String())
+	assert.NotEmpty(t, tkn.TokenString().String())
 	repo.AssertExpectations(t)
 }

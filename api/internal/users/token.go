@@ -2,23 +2,35 @@ package users
 
 type Token struct {
 	claims Claims
-	str    string
+	str    TokenString
 }
 
-func (t Token) String() string {
+func (t Token) Claims() Claims {
+	return t.claims
+}
+
+func (t Token) TokenString() TokenString {
 	return t.str
 }
 
-func ParseToken(strTkn string) Token {
-	return Token{
-		str: strTkn,
+type TokenString struct {
+	val string
+}
+
+func (t TokenString) String() string {
+	return t.val
+}
+
+func ParseTokenString(strTkn string) TokenString {
+	return TokenString{
+		val: strTkn,
 	}
 }
 
 type TokenGenerator interface {
-	Generate(claims Claims) (Token, error)
+	Generate(claims Claims) (TokenString, error)
 }
 
 type TokenValidator interface {
-	Validate(token Token) (Claims, error)
+	Validate(token TokenString) (Claims, error)
 }

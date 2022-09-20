@@ -17,9 +17,9 @@ func (c Claims) ExpiresAt() time.Time {
 	return c.expiresAt
 }
 
-func BuildClaims(user User) Claims {
+func BuildClaims(username Username, expirationTime time.Time) Claims {
 	return Claims{
-		username:  user.Username(),
-		expiresAt: time.Now().Add(time.Hour),
+		username:  username,
+		expiresAt: expirationTime,
 	}
 }

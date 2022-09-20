@@ -19,9 +19,9 @@ func TestService_SignUp(t *testing.T) {
 
 	repository.On("Save", mock.Anything, mock.MatchedBy(func(usr users.User) bool {
 		err := usr.ValidatePassword(pass)
-		return err != nil &&
+		return err == nil &&
 			usr.Username().String() == username
-	}))
+	})).Return(nil)
 	err := service.SignUp(context.Background(), username, pass)
 	require.NoError(t, err)
 	repository.AssertExpectations(t)
