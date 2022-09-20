@@ -30,7 +30,7 @@ func TestLogin(t *testing.T) {
 	repo := mysql.NewUsersRepository(sqlx.NewDb(db, "mysql"))
 	testKey := []byte("testKey")
 	tknGen, err := jwt.BuildHS256Manager(testKey)
-	tknGenSrvc := users.BuildTokenGenerationService(tknGen)
+	tknGenSrvc := users.BuildTokenGenerationService(tknGen, time.Second)
 	require.NoError(t, err)
 	service := login.BuildService(repo, tknGenSrvc)
 
@@ -63,7 +63,7 @@ func TestLogin(t *testing.T) {
 
 func TestRenewToken(t *testing.T) {
 	mockTokenGen := new(mocked.TokenGenerator)
-	service := tokenrenew.BuildService(users.BuildTokenGenerationService(mockTokenGen))
+	service := tokenrenew.BuildService(users.BuildTokenGenerationService(mockTokenGen, time.Second))
 
 	app := fiber.New()
 	testUsername := "testUsername"

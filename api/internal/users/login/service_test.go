@@ -9,13 +9,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func TestService_Login(t *testing.T) {
 	repo := new(mockable.UsersRepository)
 	tknGen, err := jwt.BuildHS256Manager([]byte("testKey"))
 	require.NoError(t, err)
-	tknGenSrvc := users.BuildTokenGenerationService(tknGen)
+	tknGenSrvc := users.BuildTokenGenerationService(tknGen, time.Second)
 	service := BuildService(repo, tknGenSrvc)
 
 	username := "test"

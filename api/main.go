@@ -15,6 +15,8 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/users/tokenrenew"
 	"github.com/software-advice/aries-team-assessment/internal/users/tokenvalidation"
 	"os"
+	"strconv"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
@@ -22,6 +24,8 @@ import (
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 )
+
+const envKeyMinutesToTokensExpire = "MINUTES_TO_TOKENS_EXPIRE"
 
 func connectDatabase() *sqlx.DB {
 	connString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?multiStatements=true&parseTime=true",
@@ -54,6 +58,16 @@ func setupTokenManager() jwt.HS256Manager {
 	return tokenManager
 }
 
+func getMinutesToTokensExpire() time.Duration {
+	minsStr := os.Getenv(envKeyMinutesToTokensExpire)
+	minsInt, err := strconv.Atoi(minsStr)
+	if err != nil {
+		log.WithError(err).Warnf("invalid env var value in key %q. Default used", envKeyMinutesToTokensExpire)
+		minsInt = 15
+	}
+	return time.Duration(minsInt) * time.Minute
+}
+
 func main() {
 	loadEnvVars()
 	db := connectDatabase()
@@ -61,7 +75,7 @@ func main() {
 	usersRepository := mysql.NewUsersRepository(db)
 	productsRepository := mysql.NewProductRepository(db)
 	userSignUpService := signup.BuildService(usersRepository)
-	tokenGenerationService := users.BuildTokenGenerationService(tokenManager)
+	tokenGenerationService := users.BuildTokenGenerationService(tokenManager, getMinutesToTokensExpire())
 	usersLoginService := login.BuildService(usersRepository, tokenGenerationService)
 	tokenValidationService := tokenvalidation.BuildService(tokenManager)
 	tokenRenewService := tokenrenew.BuildService(tokenGenerationService)
