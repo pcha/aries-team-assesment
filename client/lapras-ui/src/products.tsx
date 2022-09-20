@@ -1,9 +1,10 @@
-import ProductCreator from "./create";
-import ProductsList from "./list";
+import ProductCreator from "./products/create";
+import ProductsList from "./products/list";
 import {useEffect, useState} from "react";
-import ResultNotifier from "./resultNotifier";
+import ResultNotifier from "./products/resultNotifier";
+import {ApiUrl} from "./constants"
 
-function Products(props:{apiURL:string}) {
+function Products(props:{apiURL:string, apiToken:string, logOut:()=>void, filterTerm: string}) {
     const [products, setProducts] = useState<any[]>([])
     const [showResult, setShowResult] = useState(false)
     const [resultMessage, setResultMessage] = useState("")
@@ -16,22 +17,42 @@ function Products(props:{apiURL:string}) {
     }
 
     const fetchProducts = () => {
-        fetch(import.meta.env.VITE_API_URL + "/products").
-        then(res => res.json())
-            .then(res => setProducts(res))
+        const endpoint = ApiUrl + (props.filterTerm == "" ? "/products" : "/products/search/?q=" + encodeURI(props.filterTerm))
+        fetch(endpoint, {
+            headers: {
+                "Authorization": "Bearer " + props.apiToken
+            }
+        })
+            .then(res => {
+                switch (res.status) {
+                    case 200:
+                        res.json()
+                            .then(res => setProducts(res))
+                        break
+                    case 401:
+                        props.logOut()
+                        break
+                    case 500:
+                    default:
+                        // TODO Show MUI alert
+                        res.json().then((body) => alert(body.error))
+                }
+            })
     }
-    useEffect(fetchProducts, [])
+
+    useEffect(fetchProducts, [props.filterTerm])
 
     const createProduct = (name: string, description: string) => {
         let data = {
             name: name,
             description: description
         }
-        fetch(import.meta.env.VITE_API_URL + "/products", {
+        fetch(ApiUrl + "/products", {
             method: 'POST',
             headers: {
                 Accept: 'application/form-data',
                 'Content-Type': 'application/json',
+                Authorization: "Bearer " + props.apiToken
             },
             body: JSON.stringify(data),
         })
@@ -43,6 +64,9 @@ function Products(props:{apiURL:string}) {
                             break
                         case 400:
                             showResultDialog("Invalid data.", false)
+                            break
+                        case 401:
+                            props.logOut()
                             break
                         case 500:
                         default:
@@ -60,7 +84,7 @@ function Products(props:{apiURL:string}) {
     return <div>
         <ResultNotifier open={showResult} setOpen={setShowResult} message={resultMessage} success={success} />
         <ProductCreator create={createProduct}/>
-        <ProductsList products={products} />
+        <ProductsList products={products} isSearch={props.filterTerm != ""} />
     </div>
 }
 

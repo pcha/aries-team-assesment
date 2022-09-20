@@ -10,6 +10,7 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
 	"github.com/software-advice/aries-team-assessment/internal/products/searching"
 	"github.com/software-advice/aries-team-assessment/internal/users/login"
+	"github.com/software-advice/aries-team-assessment/internal/users/signup"
 	"github.com/software-advice/aries-team-assessment/internal/users/tokenvalidation"
 	"os"
 
@@ -57,6 +58,7 @@ func main() {
 	tokenManager := setupTokenManager()
 	usersRepository := mysql.NewUsersRepository(db)
 	productsRepository := mysql.NewProductRepository(db)
+	userSignUpService := signup.BuildService(usersRepository)
 	usersLoginService := login.BuildService(usersRepository, tokenManager)
 	tokenValidationService := tokenvalidation.BuildService(tokenManager)
 	productCreationService := creation.BuildService(productsRepository)
@@ -68,6 +70,7 @@ func main() {
 	app.Get("/ping", func(ctx *fiber.Ctx) error {
 		return ctx.JSON(fiber.Map{"ping": "pong"})
 	})
+	app.Post("/users", routes.SignUp(userSignUpService))
 	app.Post("/users/login", routes.Login(usersLoginService))
 	products := app.Group("/products", routes.VerifyToken(tokenValidationService))
 	products.Get("/", routes.GetAllProducts(productsListingService))
