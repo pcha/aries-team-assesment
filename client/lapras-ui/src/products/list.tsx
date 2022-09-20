@@ -10,10 +10,10 @@ import {Alert} from "@mui/material";
 
 // TODO type Product
 
-function ProductsList(props:{products:any[], isSearch:boolean}) {
+function ProductsList(props:{products:any[], isSearch:boolean, maxHeight: number}) {
     const headerColor = ""
 
-    return (props.products.length ? <TableContainer component={Paper} sx={{maxHeight: 500}}>
+    return (props.products.length ? <TableContainer component={Paper} sx={{maxHeight: props.maxHeight}}>
         <Table stickyHeader>
             <TableHead sx={{backgroundColor: "black"}}>
                 <TableRow>

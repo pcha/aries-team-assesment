@@ -4,7 +4,7 @@ import {useEffect, useState} from "react";
 import ResultNotifier from "./products/resultNotifier";
 import {ApiUrl} from "./constants"
 
-function Products(props:{apiURL:string, apiToken:string, logOut:()=>void, filterTerm: string}) {
+function Products(props:{apiURL:string, apiToken:string, logOut:()=>void, filterTerm: string, maxHeight: number}) {
     const [products, setProducts] = useState<any[]>([])
     const [showResult, setShowResult] = useState(false)
     const [resultMessage, setResultMessage] = useState("")
@@ -84,7 +84,7 @@ function Products(props:{apiURL:string, apiToken:string, logOut:()=>void, filter
     return <div>
         <ResultNotifier open={showResult} setOpen={setShowResult} message={resultMessage} success={success} />
         <ProductCreator create={createProduct}/>
-        <ProductsList products={products} isSearch={props.filterTerm != ""} />
+        <ProductsList products={products} isSearch={props.filterTerm != ""} maxHeight={props.maxHeight} />
     </div>
 }
 

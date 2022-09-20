@@ -1,9 +1,9 @@
 import {AppBar, Box, Toolbar, Typography} from "@mui/material";
-import Button from "@mui/material/Button";
 import FilterBar from "./products/FilterBar";
+import UserArea from "./UserArea";
 
 
-function Header(props:{loggedIn:boolean, handleLogOut: () => void, handleSearch: (term:string) => void}) {
+function Header(props: { loggedIn: boolean, handleLogOut: () => void, handleSearch: (term: string) => void, username: string }) {
     return <Box sx={{flexGrow: 1}}>
         <AppBar position="fixed">
             <Toolbar>
@@ -11,15 +11,15 @@ function Header(props:{loggedIn:boolean, handleLogOut: () => void, handleSearch:
                     LAPRAS
                 </Typography>
                 {props.loggedIn ?
-                <FilterBar search={props.handleSearch} sx={{flexGrow: 0.6}} />:""}
+                    <FilterBar search={props.handleSearch} sx={{flexGrow: 0.6}}/> : ""}
                 {props.loggedIn ?
-                    <div style={{flexGrow: 0.2}}>
-                        <Button sx={{float: 'right'}} color="inherit" variant="text" onClick={props.handleLogOut}>{"Log Out"}</Button></div> :
+                    <UserArea username={props.username} handleLogOut={props.handleLogOut}/>
+                    :
                     ""}
 
             </Toolbar>
         </AppBar>
-    <Toolbar></Toolbar>
+        <Toolbar></Toolbar>
     </Box>
 
 }

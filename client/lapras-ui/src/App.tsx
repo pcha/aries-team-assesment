@@ -6,11 +6,12 @@ import {useEffect, useState} from "react";
 import LoginForm from "./LoginForm";
 import {useCookies} from "react-cookie";
 import {ApiUrl} from "./constants";
+import useWindowDimensions from "./useWindowDimensions";
 
 export default App
 
 function App() {
-    const [cookies, setCookies, removeCookies] = useCookies(['token'])
+    const [cookies, setCookies, removeCookies] = useCookies(['token', 'username'])
     const [loggedIn, setLoggedIn] = useState(cookies.token != "")
     const [filterTerm, setFilterTerm] = useState("")
 
@@ -22,9 +23,11 @@ function App() {
         setLoggedIn(false)
     }
 
-    const setToken = (token:string) => setCookies('token', token);
+    const setToken = (token: string) => setCookies('token', token);
+    const setUsername = (username: string) => setCookies('username', username)
 
     const renewToken = () => {
+        if (!loggedIn) return
         fetch(ApiUrl + "/users/token/renew", {
             method: 'POST',
             headers: {
@@ -34,7 +37,11 @@ function App() {
             switch (res.status) {
                 case 200:
                     res.json()
-                        .then(body => setToken(body.token))
+                        .then(body => {
+                            setToken(body.token)
+                            setUsername(body.claims.username)
+                        })
+                    setTimeout(renewToken, 13 * 60 * 1000) // renew token in 13 minutes
                     break
                 case 401:
                     logOut()
@@ -43,18 +50,19 @@ function App() {
     }
 
     useEffect(() => {
-        if (loggedIn) {
-            renewToken();
-        }
-    })
+        renewToken();
+    }, [loggedIn])
+
+    const windowDimensions = useWindowDimensions()
 
     return (
         <div className="App" style={{overflow: "hidden"}}>
-            <Header loggedIn={loggedIn} handleLogOut={() => setLoggedIn(false)} handleSearch={setFilterTerm}/>
+            <Header loggedIn={loggedIn} handleLogOut={logOut} handleSearch={setFilterTerm} username={cookies.username}/>
             <LoginForm show={!loggedIn} handleLogIn={handleLoggedIn} setToken={setToken}/>
             {loggedIn ? <Container id="content" sx={{}}>
-                <Products apiURL={import.meta.env.API_URL} apiToken={cookies.token} logOut={logOut} filterTerm={filterTerm}/>
-            </Container>: ""}
+                <Products apiURL={import.meta.env.API_URL} apiToken={cookies.token} logOut={logOut}
+                          filterTerm={filterTerm} maxHeight={windowDimensions.height - 152}/>
+            </Container> : ""}
         </div>
     );
 }
