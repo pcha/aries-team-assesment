@@ -16,7 +16,7 @@ export type Session = {
 function useSession(): Session {
     const [firstRender, setFirstRender] = useState(true)
     const [cookies, setCookie, removeCookie] = useCookies(['token', 'username'])
-    const [loggedIn, setLoggedIn] = useState(false) // If the user reload the site assume that it's logged and try to renew the token
+    const [loggedIn, setLoggedIn] = useState(cookies.token != "") // If the user reload the site assume that it's logged and try to renew the token
     const [loginResultMessage, setLoginResultMessage] = useState("")
 
     // state representing the cookies values. This in needed to expose the values typed, otherwise typing prevent the value update
