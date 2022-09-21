@@ -16,7 +16,7 @@ export type Session = {
 function useSession(): Session {
     const [firstRender, setFirstRender] = useState(true)
     const [cookies, setCookie, removeCookie] = useCookies(['token', 'username'])
-    const [loggedIn, setLoggedIn] = useState(cookies.token != "") // If the user reload the site assume that it's logged and try to renew the token
+    const [loggedIn, setLoggedIn] = useState(false) // If the user reload the site assume that it's logged and try to renew the token
     const [loginResultMessage, setLoginResultMessage] = useState("")
 
     // state representing the cookies values. This in needed to expose the values typed, otherwise typing prevent the value update
@@ -25,7 +25,9 @@ function useSession(): Session {
     // use effect listening cookies changes and updating corresponding states
     useEffect(() => setUsernameState(cookies.username), [cookies.username])
     useEffect(() => setTokenState(cookies.token), [cookies.token])
-
+    // use effect to handle logged in, it depends on token state because is when any component can access to the token.
+    // Otherwise, it could result in eventual 401 responses.
+    useEffect(() => setLoggedIn(!!token), [token])
 
 
     // wrapper to set the token in the cookies
@@ -33,8 +35,6 @@ function useSession(): Session {
     // wrapper to set the username in the cookies
     const setUsername = (username: string) => setCookie('username', username)
 
-
-    const handleLoggedIn = () => setLoggedIn(true)
     const logIn = (username: string, password: string) => {
         setLoginResultMessage("")
         fetch(ApiUrl + "/users/login", {
@@ -50,7 +50,7 @@ function useSession(): Session {
                         res.json()
                             .then(body => {
                                 setToken(body.token)
-                            }).then(() => handleLoggedIn())
+                            })
                         break
                     case 401:
                     case 500:
