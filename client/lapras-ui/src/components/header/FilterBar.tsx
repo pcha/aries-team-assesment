@@ -4,6 +4,15 @@ import TextField from "@mui/material/TextField";
 import {useEffect, useState} from "react";
 import SearchIcon from '@mui/icons-material/Search';
 
+/**
+ * Component with a textfield to filter products
+ *
+ * @param props - {
+ *     handleFilter: handler to call when the text is written
+ *     sx: styles to apply to the component
+ * }
+ * @constructor
+ */
 function FilterBar(props:{handleFilter:(term:string)=>void, sx:object}) {
     const [filterTerm, setFilterTerm] = useState("")
 

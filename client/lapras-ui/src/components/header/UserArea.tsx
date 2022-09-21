@@ -1,8 +1,16 @@
 import {Avatar, Box, Divider, IconButton, ListItemIcon, Menu, MenuItem, Tooltip} from "@mui/material";
 import {Logout} from "@mui/icons-material";
-import {useState} from "react";
+import React, {useState} from "react";
+import {Session} from "../../hooks/useSession";
 
-function UserArea(props: { username: string, handleLogOut: () => void }) {
+/**
+ * Component to show the User Area
+ * @param props - {
+ *     session: user session to handle
+ * }
+ * @constructor
+ */
+function UserArea(props: { session:Session }) {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -11,9 +19,9 @@ function UserArea(props: { username: string, handleLogOut: () => void }) {
     const handleClose = () => {
         setAnchorEl(null);
     };
-    return (<div style={{flexGrow: 0.2}}>
+    return (props.session.isLoggedIn ? <div style={{flexGrow: 0.2}}>
         <Box sx={{display: 'flex', alignItems: 'center', textAlign: 'center', float: 'right'}}>
-            <Tooltip title={"Logged as " + props.username} sx={{float: 'right'}}>
+            <Tooltip title={"Logged as " + props.session.username} sx={{float: 'right'}}>
                 <IconButton
                     onClick={handleClick}
                     size="small"
@@ -62,16 +70,16 @@ function UserArea(props: { username: string, handleLogOut: () => void }) {
             anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
         >
             <MenuItem>
-                <Avatar/> {props.username}
+                <Avatar/> {props.session.username}
             </MenuItem>
             <Divider/>
-            <MenuItem onClick={props.handleLogOut}>
+            <MenuItem onClick={props.session.logOut}>
                 <ListItemIcon>
                     <Logout fontSize="small"/>
                 </ListItemIcon>
                 Logout
             </MenuItem>
-        </Menu></div>)
+        </Menu></div> : null)
    }
 
 

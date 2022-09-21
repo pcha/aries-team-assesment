@@ -13,10 +13,23 @@ export type CreationResult = {
     message: string
 }
 
+
+/**
+ * Hook to handle product list and creation. When an endpoint gets a http code 401, it handles log out
+ *
+ * @param session - User session used get token and handle logOut on 401
+ *
+ * @return [
+ *  Products filtered list,
+ *  Function to set the filter term ,
+ *  Function that creates a new Product and return a promise to handle results
+ * ]
+ */
 function useProducts (session: Session): [Product[], (filter:string)=>void, (name:string, description:string)=>Promise<CreationResult>] {
     const [products, setProducts] = useState<Product[]>([])
     const [filter, setFilter] = useState("")
 
+    // get all the products matching with the filter, if it's set
     const fetchProducts = () => {
         const endpoint = ApiUrl + (filter == "" ? "/products" : "/products/search/?q=" + encodeURI(filter))
         fetch(endpoint, {
@@ -41,8 +54,12 @@ function useProducts (session: Session): [Product[], (filter:string)=>void, (nam
             })
     }
 
-    useEffect(fetchProducts, [filter])
+    // executes the fetch when the filter changes or the user logs in
+    useEffect(() => {
+        if (session.isLoggedIn) fetchProducts()
+    }, [filter, session.isLoggedIn])
 
+    // create a product and return a Promise ton handle the request results
     const createProduct = (name: string, description: string) => {
         let data = {
             name: name,

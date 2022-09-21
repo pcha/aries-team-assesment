@@ -2,19 +2,37 @@ import {useCookies} from "react-cookie";
 import {useEffect, useState} from "react";
 import {ApiUrl} from "../etc/constants";
 
+// Contain session related states and function
 export type Session = {
     token: string,
     username: string,
     isLoggedIn: boolean,
-    logIn: (username:string, password:string) => void,
+    logIn: (username: string, password: string) => void,
     logOut: () => void,
     loginResultMessage: string
 }
 
+// Hook to handle user session
 function useSession(): Session {
-    const [cookies, setCookies, removeCookies] = useCookies(['token', 'username'])
+    const [firstRender, setFirstRender] = useState(true)
+    const [cookies, setCookie, removeCookie] = useCookies(['token', 'username'])
     const [loggedIn, setLoggedIn] = useState(cookies.token != "") // If the user reload the site assume that it's logged and try to renew the token
     const [loginResultMessage, setLoginResultMessage] = useState("")
+
+    // state representing the cookies values. This in needed to expose the values typed, otherwise typing prevent the value update
+    const [username, setUsernameState] = useState<string>(cookies.username)
+    const [token, setTokenState] =useState<string>(cookies.token)
+    // use effect listening cookies changes and updating corresponding states
+    useEffect(() => setUsernameState(cookies.username), [cookies.username])
+    useEffect(() => setTokenState(cookies.token), [cookies.token])
+
+
+
+    // wrapper to set the token in the cookies
+    const setToken = (tkn: string) => setCookie('token', tkn);
+    // wrapper to set the username in the cookies
+    const setUsername = (username: string) => setCookie('username', username)
+
 
     const handleLoggedIn = () => setLoggedIn(true)
     const logIn = (username: string, password: string) => {
@@ -43,16 +61,17 @@ function useSession(): Session {
     }
 
     const logOut = () => {
-        removeCookies('token')
-        removeCookies('username')
+        removeCookie('token')
+        removeCookie('username')
         setLoggedIn(false)
     }
 
-    const setToken = (token: string) => setCookies('token', token);
-    const setUsername = (username: string) => setCookies('username', username)
-
+    // Call the renovation api endpoint and set the new token, if fails it'll log out
     const renewToken = () => {
-        if (!loggedIn) return
+        if (!loggedIn || !cookies.token) {
+            logOut()
+            return
+        }
         fetch(ApiUrl + "/users/token/renew", {
             method: 'POST',
             headers: {
@@ -66,26 +85,39 @@ function useSession(): Session {
                             setToken(body.token)
                             setUsername(body.claims.username)
                         })
-                    setTimeout(renewToken, 13 * 60 * 1000) // renew token in 13 minutes
                     break
                 case 401:
+                case 500:
+                default:
                     logOut()
-                // TODO: 500?
             }
         })
     }
 
+    // To be executed only on the first render
     useEffect(() => {
-        renewToken();
-    }, [loggedIn])
+        // mark the first render as executed
+        setFirstRender(false)
+        // If there is a token on a first render I don't know when it'll expire, so it forces a renovation
+        renewToken()
+    }, [])
+
+    // When the token change, it schedules a renovation before expiration
+    useEffect(() => {
+        // In the first render the token in renewed to avoid expiration, so the renovation will be already scheduled.
+        // Also, if the token is empty, doesn't make sense schedule a renovation
+        if (!firstRender && cookies.token) {
+            setTimeout(renewToken, 13 * 60 * 1000) // renew token in 13 minutes
+        }
+    }, [cookies.token])
 
 
     return {
-        token: cookies.token,
-        username: cookies.username,
+        token: token,
+        username: username,
         isLoggedIn: loggedIn,
-        logIn: logIn,
-        logOut: logOut,
+        logIn: logIn, //executes log In
+        logOut: logOut, //executer log out
         loginResultMessage: loginResultMessage
     }
 }

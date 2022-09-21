@@ -9,6 +9,14 @@ import DialogContent from "@mui/material/DialogContent";
 import Dialog from "@mui/material/Dialog";
 import {Session} from "../hooks/useSession";
 
+/**
+ * Component with the Log-In form
+ *
+ * @param props - {
+ *     session: user session
+ * }
+ * @constructor
+ */
 function LoginForm(props: { session: Session }) {
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
