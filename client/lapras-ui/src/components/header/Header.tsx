@@ -7,8 +7,8 @@ import {Session} from "../../hooks/useSession";
  * Header (App Bar) component with the filter bar and the logged in area
  *
  * @param props - {
- *     session: session used to know elements to show end to handle in the UserArea
- *     handleFilter: handler to call when the user type a text in the filter
+ *     session: Used lo handle log in / log out,
+ *     handleFilter: handler to call when the user writes a text in the filter
  * }
  * @constructor
  */

@@ -2,7 +2,7 @@ import {useCookies} from "react-cookie";
 import {useEffect, useState} from "react";
 import {ApiUrl} from "../etc/constants";
 
-// Contain session related states and function
+// Contains session related states and function
 export type Session = {
     token: string,
     username: string,
@@ -16,13 +16,14 @@ export type Session = {
 function useSession(): Session {
     const [firstRender, setFirstRender] = useState(true)
     const [cookies, setCookie, removeCookie] = useCookies(['token', 'username'])
-    const [loggedIn, setLoggedIn] = useState(cookies.token != "") // If the user reload the site assume that it's logged and try to renew the token
+    const [loggedIn, setLoggedIn] = useState(cookies.token != "") // If there is a previous token in the cookies it renders as logged
     const [loginResultMessage, setLoginResultMessage] = useState("")
 
-    // state representing the cookies values. This in needed to expose the values typed, otherwise typing prevent the value update
+    // state representing the cookies values. This is needed to expose these values typed as 'string'. 
+    //Otherwise, typing these values will prevent them to get updated.
     const [username, setUsernameState] = useState<string>(cookies.username)
     const [token, setTokenState] =useState<string>(cookies.token)
-    // use effect listening cookies changes and updating corresponding states
+    // use effect listening cookies changes and updating the corresponding states
     useEffect(() => setUsernameState(cookies.username), [cookies.username])
     useEffect(() => setTokenState(cookies.token), [cookies.token])
     // use effect to handle loggedIn. It depends on the token state because it is this State the one that provides the token values to the different components.
@@ -66,7 +67,7 @@ function useSession(): Session {
         setLoggedIn(false)
     }
 
-    // Call the renovation api endpoint and set the new token, if fails it'll log out
+    // Calls the renovation api endpoint and sets the new token, if it fails it will log out
     const renewToken = () => {
         if (!loggedIn || !cookies.token) {
             logOut()
@@ -98,14 +99,14 @@ function useSession(): Session {
     useEffect(() => {
         // mark the first render as executed
         setFirstRender(false)
-        // If there is a token on a first render I don't know when it'll expire, so it forces a renovation
+        // If there is a token on a first render I don not  know when it will expire, so it forces a renovation
         renewToken()
     }, [])
 
-    // When the token change, it schedules a renovation before expiration
+    // When the token changes, it schedules a renovation before expiration
     useEffect(() => {
         // In the first render the token in renewed to avoid expiration, so the renovation will be already scheduled.
-        // Also, if the token is empty, doesn't make sense schedule a renovation
+        // Also, if the token is empty, it does not make sense to schedule a renovation
         if (!firstRender && cookies.token) {
             setTimeout(renewToken, 13 * 60 * 1000) // renew token in 13 minutes
         }

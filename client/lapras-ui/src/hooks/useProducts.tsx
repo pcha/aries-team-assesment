@@ -17,7 +17,7 @@ export type CreationResult = {
 /**
  * Hook to handle product list and creation. When an endpoint gets a http code 401, it handles log out
  *
- * @param session - User session used get token and handle logOut on 401
+ * @param session - Used to get token and handle logOut on 401
  *
  * @return [
  *  Products filtered list,
@@ -48,7 +48,6 @@ function useProducts (session: Session): [Product[], (filter:string)=>void, (nam
                         break
                     case 500:
                     default:
-                        // TODO Show MUI alert
                         res.json().then((body) => alert(body.error))
                 }
             })
@@ -59,7 +58,7 @@ function useProducts (session: Session): [Product[], (filter:string)=>void, (nam
         if (session.isLoggedIn) fetchProducts()
     }, [filter, session.isLoggedIn])
 
-    // create a product and return a Promise ton handle the request results
+    // creates a product and returns a Promise to handle the request results
     const createProduct = (name: string, description: string) => {
         let data = {
             name: name,

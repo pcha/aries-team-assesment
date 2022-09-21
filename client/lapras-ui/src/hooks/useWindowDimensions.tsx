@@ -9,7 +9,7 @@ type Dimensions = {
 }
 
 /**
- * get current window dimensions
+ * gets current window dimensions
  */
 function getWindowDimensions(): Dimensions {
   const { innerWidth: width, innerHeight: height } = window;

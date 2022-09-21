@@ -5,7 +5,7 @@ import CreateButton from "./CreateButton";
 /**
  * Component with the product creation related components
  * @param props - {
- *     handleCreate: handler to call to create the product
+ *     handleCreate: handler to be called in order to create the product
  * }
  * @constructor
  */

@@ -17,7 +17,6 @@ function FilterBar(props:{handleFilter:(term:string)=>void, sx:object}) {
     const [filterTerm, setFilterTerm] = useState("")
 
     useEffect(() => {
-        // console.log("use effect: " + filterTerm)
         props.handleFilter(filterTerm)
     }, [filterTerm])
 
@@ -40,7 +39,6 @@ function FilterBar(props:{handleFilter:(term:string)=>void, sx:object}) {
         size="small"
         sx={{
             borderStyle: 'none',
-            // ...{backgroundColor: alpha('#ffffff', 0.15),},
         ...props.sx
     }}
         onChange={e => setFilterTerm(e.target.value)}

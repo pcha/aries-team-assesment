@@ -1,7 +1,7 @@
 import {Alert, Snackbar} from "@mui/material";
 
 /**
- * Component to show action results, such as a Product creation
+ * Component to show product creation results
  *
  * @param props - {
  *     message: message to show,

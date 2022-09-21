@@ -12,7 +12,7 @@ import DialogActions from "@mui/material/DialogActions";
  * @param props - {
  *     open: flag indicating to show or not the Form
  *     handleClose: handler to call when the form should be closed
- *     handleCreate: handle to call when the submit button is closed
+ *     handleCreate: handler to call when the submit button is closed
  * }
  * @constructor
  */

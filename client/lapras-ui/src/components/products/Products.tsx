@@ -5,7 +5,7 @@ import ResultNotifier from "./ResultNotifier";
 import {CreationResult, Product} from "../../hooks/useProducts";
 
 /**
- * Component grouping products related components
+ * Component that groups the components that are related to products
  *
  * @param props - {
  *     products: products to list
