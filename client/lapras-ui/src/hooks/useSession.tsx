@@ -25,8 +25,8 @@ function useSession(): Session {
     // use effect listening cookies changes and updating corresponding states
     useEffect(() => setUsernameState(cookies.username), [cookies.username])
     useEffect(() => setTokenState(cookies.token), [cookies.token])
-    // use effect to handle logged in, it depends on token state because is when any component can access to the token.
-    // Otherwise, it could result in eventual 401 responses.
+    // use effect to handle loggedIn. It depends on the token state because it is this State the one that provides the token values to the different components.
+    // Otherwise, it could result in an eventual 401 response.
     useEffect(() => setLoggedIn(!!token), [token])
 
 
