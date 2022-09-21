@@ -31,7 +31,7 @@ function useProducts (session: Session): [Product[], (filter:string)=>void, (nam
 
     // get all the products matching with the filter, if it's set
     const fetchProducts = () => {
-        const endpoint = ApiUrl + (filter == "" ? "/products" : "/products/search/?q=" + encodeURI(filter))
+        const endpoint = ApiUrl + "/products" + (filter != "" ?  "?q=" + encodeURI(filter) : "")
         fetch(endpoint, {
             headers: {
                 "Authorization": "Bearer " + session.token
