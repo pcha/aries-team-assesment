@@ -10,10 +10,12 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// internalErrorResponse is a generic internal error response
 var internalErrorResponse = ErrorResponse{
 	Error: "internal error",
 }
 
+// sendInternalErrorResponse set the status 500 and send internalErrorResponse
 func sendInternalErrorResponse(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusInternalServerError).JSON(internalErrorResponse)
 }

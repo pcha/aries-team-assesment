@@ -11,6 +11,7 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/platform/mysql"
 	"github.com/software-advice/aries-team-assessment/internal/users"
 	"github.com/software-advice/aries-team-assessment/internal/users/login"
+	"github.com/software-advice/aries-team-assessment/internal/users/signup"
 	"github.com/software-advice/aries-team-assessment/internal/users/tokenrenew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -30,8 +31,8 @@ func TestLogin(t *testing.T) {
 	repo := mysql.NewUsersRepository(sqlx.NewDb(db, "mysql"))
 	testKey := []byte("testKey")
 	tknGen, err := jwt.BuildHS256Manager(testKey)
-	tknGenSrvc := users.BuildTokenGenerationService(tknGen, time.Second)
 	require.NoError(t, err)
+	tknGenSrvc := users.BuildTokenGenerationService(tknGen, time.Second)
 	service := login.BuildService(repo, tknGenSrvc)
 
 	app := fiber.New()
@@ -89,4 +90,62 @@ func TestRenewToken(t *testing.T) {
 	err = json.Unmarshal(bodyBytes, &parsedBody)
 	require.NoError(t, err)
 	assert.Equal(t, testTkn, parsedBody.Token)
+}
+
+func TestSignUp(t *testing.T) {
+	type testCase struct {
+		wantStatus int
+		userExists bool
+		canSave    bool
+	}
+	cases := map[string]testCase{
+		"user create": {
+			wantStatus: http.StatusCreated,
+			canSave:    true,
+		},
+		"user already exists": {
+			wantStatus: http.StatusConflict,
+			userExists: true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			db, mockDb, err := sqlmock.New()
+			require.NoError(t, err)
+			defer db.Close()
+			repo := mysql.NewUsersRepository(sqlx.NewDb(db, "mysql"))
+			require.NoError(t, err)
+			service := signup.BuildService(repo)
+
+			app := fiber.New()
+			app.Post("/users/signup", SignUp(service))
+
+			username := "test"
+			rows := sqlmock.
+				NewRows([]string{"id", "username", "password_hash", "created_at"})
+			if tc.userExists {
+				rows.AddRow(1, username, []byte("$some.hash"), time.Now())
+			}
+			mockDb.ExpectQuery("SELECT *").
+				WithArgs(username).
+				WillReturnRows(rows)
+			if tc.canSave {
+
+				mockDb.ExpectExec("INSERT INTO `users`").
+					WithArgs(username, sqlmock.AnyArg()).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/users/signup", strings.NewReader(`{
+	"username": "test",
+	"password": "asd123"
+}`))
+			res, err := app.Test(req, int(time.Hour))
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantStatus, res.StatusCode)
+			assert.NoError(t, mockDb.ExpectationsWereMet())
+		})
+	}
+
 }

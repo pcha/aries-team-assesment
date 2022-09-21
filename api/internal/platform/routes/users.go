@@ -13,25 +13,30 @@ import (
 	"time"
 )
 
+// LoginRequest id the DTO used to parse the login request body
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
+// SignUpRequest is the DTO used to parse the signup request
 type SignUpRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
+// Claims has the token claims
 type Claims struct {
 	Username string `json:"username"`
 }
 
+// TokenResponse is the response to return when the client expects a token
 type TokenResponse struct {
 	Token  string `json:"token"`
 	Claims Claims `json:"claims"`
 }
 
+// Login returns a handler that executes the login
 func Login(service login.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		var req LoginRequest
@@ -44,7 +49,7 @@ func Login(service login.Service) fiber.Handler {
 		}
 		tkn, err := service.Login(ctx.Context(), req.Username, []byte(req.Password))
 		if err != nil {
-			if errors.Is(err, users.ErrInvalidPassword) || errors.Is(err, users.ErrUserNotFound) {
+			if errors.Is(err, users.ErrInvalidPassword) || errors.Is(err, login.ErrUserNotFound) {
 				return ctx.
 					Status(http.StatusUnauthorized).
 					JSON(ErrorResponse{
@@ -61,6 +66,7 @@ func Login(service login.Service) fiber.Handler {
 	}
 }
 
+// SignUp returns a handler that create a new users.User
 func SignUp(service signup.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		var req SignUpRequest
@@ -73,6 +79,11 @@ func SignUp(service signup.Service) fiber.Handler {
 		}
 		err = service.SignUp(ctx.Context(), req.Username, []byte(req.Password))
 		if err != nil {
+			if errors.Is(err, signup.ErrAlreadyTakenUsername) {
+				return ctx.
+					Status(http.StatusConflict).
+					JSON(ErrorResponse{Error: "username already taken"})
+			}
 			if errors.Is(err, signup.ErrMakingUser) {
 				return ctx.
 					Status(http.StatusBadRequest).
@@ -89,6 +100,8 @@ func SignUp(service signup.Service) fiber.Handler {
 	}
 }
 
+// RenewToken returns a handler that responds with a new token for the claims set in the ctx.UserContext.
+// This handler assumes that it's preceded by VerifyToken middleware who sets the claims in th ctx.UserContext
 func RenewToken(service tokenrenew.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		claimsVal := ctx.UserContext().Value(ctxClaimsKey)
@@ -105,6 +118,7 @@ func RenewToken(service tokenrenew.Service) fiber.Handler {
 	}
 }
 
+// send the TokenResponse with the expiration in the headers
 func sendTokenResponse(ctx *fiber.Ctx, tkn users.Token) error {
 	ctx.Set(fiber.HeaderExpires, tkn.Claims().ExpiresAt().Format(time.RFC1123))
 	return ctx.

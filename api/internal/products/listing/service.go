@@ -5,18 +5,17 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/products"
 )
 
-// Service for listing all the products.
+// Service is an application service to list products
 type Service struct {
 	repository products.Repository
 }
 
-// List returns all the products or an error if something fail.
-func (s Service) List(ctx context.Context) ([]products.Product, error) {
-	prods, err := s.repository.GetAll(ctx)
-	return prods, err
+// List executes the search for the given pattern
+func (s Service) List(ctx context.Context, filter string) ([]products.Product, error) {
+	return s.repository.Search(ctx, filter)
 }
 
-// BuildService returns a Service
+// BuildService returns a Service with the given repository
 func BuildService(repository products.Repository) Service {
 	return Service{
 		repository: repository,

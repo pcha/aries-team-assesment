@@ -11,6 +11,8 @@ import (
 
 const ctxClaimsKey = "claims"
 
+// VerifyToken returns a middleware to verify the token before continue with any action.
+// The user.Claims of the given token are set in the ctx.UserContext
 func VerifyToken(service tokenvalidation.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		auth := ctx.Get(fiber.HeaderAuthorization)

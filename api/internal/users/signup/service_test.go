@@ -15,13 +15,16 @@ func TestService_SignUp(t *testing.T) {
 
 	username := "test"
 	pass := []byte("asd123")
-	// hash := []byte("$2a$10$Vq8Tx8eLAFevAULXWtfJXOFFh6eMAMgJ4rQwPett62hO6.6zCJ9eW")
 
-	repository.On("Save", mock.Anything, mock.MatchedBy(func(usr users.User) bool {
-		err := usr.ValidatePassword(pass)
-		return err == nil &&
-			usr.Username().String() == username
-	})).Return(nil)
+	repository.
+		On("Get", mock.Anything, users.ParseUnsafeUsername(username)).
+		Return(users.NotUsr, nil)
+	repository.
+		On("Save", mock.Anything, mock.MatchedBy(func(usr users.User) bool {
+			err := usr.ValidatePassword(pass)
+			return err == nil &&
+				usr.Username().String() == username
+		})).Return(nil)
 	err := service.SignUp(context.Background(), username, pass)
 	require.NoError(t, err)
 	repository.AssertExpectations(t)

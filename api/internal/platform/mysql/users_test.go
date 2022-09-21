@@ -28,4 +28,21 @@ func TestUsersRepository_Get(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, username, usr.Username().String())
 	assert.Equal(t, []byte(hash), usr.PasswordHash().Bytes())
+	require.NoError(t, mockDB.ExpectationsWereMet())
+}
+
+func TestUsersRepository_Save(t *testing.T) {
+	db, mockDB, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := NewUsersRepository(sqlx.NewDb(db, "mysql"))
+	username := "test"
+	hash := []byte("$2a$10$Vq8Tx8eLAFevAULXWtfJXOFFh6eMAMgJ4rQwPett62hO6.6zCJ9eW")
+	mockDB.ExpectExec("INSERT INTO `users`").
+		WithArgs(username, hash).
+		WillReturnResult(sqlmock.NewResult(2, 1))
+	err = repo.Save(context.Background(), users.BuildUnsafe(username, hash))
+	require.NoError(t, err)
+	require.NoError(t, mockDB.ExpectationsWereMet())
 }

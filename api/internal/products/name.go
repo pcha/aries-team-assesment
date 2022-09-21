@@ -5,7 +5,7 @@ import "errors"
 // NameCanNotBeEmptyErr is the error to returns if the name is empty.
 var NameCanNotBeEmptyErr = errors.New("name can't be empty")
 
-// Name is the obejct value used to represent the property name of a Product.
+// Name is the obeject value used to represent the property name of a Product.
 type Name struct {
 	val string
 }

@@ -2,10 +2,10 @@ package products
 
 import "errors"
 
-// DescriptionCanNotBeEmptyErr is the error to return if the description is empty
-var DescriptionCanNotBeEmptyErr = errors.New("description can't be empty")
+// DescriptionCanNotBeEmptyErr is the error to return if the name is empty
+var DescriptionCanNotBeEmptyErr = errors.New("name can't be empty")
 
-// Description is an object value for the field description of Product
+// Description is an object value for the field name of Product
 type Description struct {
 	val string
 }
@@ -15,7 +15,7 @@ func (d Description) String() string {
 	return d.val
 }
 
-// ParseDescription parses a string to a description. DescriptionCanNotBeEmptyErr is returned if the string is empty.
+// ParseDescription parses a string to a name. DescriptionCanNotBeEmptyErr is returned if the string is empty.
 func ParseDescription(val string) (Description, error) {
 	if val == "" {
 		return Description{}, DescriptionCanNotBeEmptyErr

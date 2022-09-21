@@ -8,7 +8,6 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/products"
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
-	"github.com/software-advice/aries-team-assessment/internal/products/searching"
 	"net/http"
 	"time"
 )
@@ -32,27 +31,10 @@ type ProductCreatedResponse struct {
 	ID int64 `json:"id"`
 }
 
-// GetAllProducts is the handler to return all the products.
-func GetAllProducts(service listing.Service) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
-		prods, err := service.List(ctx.Context())
-		if err != nil {
-			log.WithError(err).Error("Can't get products from DB :(")
-
-			return ctx.
-				Status(http.StatusInternalServerError).
-				JSON(internalErrorResponse)
-		}
-		res := parseProductsList(prods)
-		return ctx.
-			Status(http.StatusOK).
-			JSON(res)
-	}
-}
-
-// CreateProduct is the handler to create a new product
+// CreateProduct returns a http handler to create a new product.
 func CreateProduct(service creation.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		// request parsing
 		rawReq := ctx.Request()
 		npReq := CreateProductRequest{}
 		err := json.Unmarshal(rawReq.Body(), &npReq)
@@ -60,8 +42,10 @@ func CreateProduct(service creation.Service) fiber.Handler {
 			return ctx.Status(http.StatusBadRequest).JSON(ErrorResponse{Error: "Invalid request body - " + err.Error()})
 		}
 
+		// service call
 		id, err := service.Create(ctx.Context(), npReq.Name, npReq.Description)
 
+		// response parsing
 		if err != nil {
 			if errors.Is(err, creation.ErrMakingProduct) {
 				return ctx.
@@ -85,25 +69,23 @@ func CreateProduct(service creation.Service) fiber.Handler {
 	}
 }
 
-func SearchProducts(service searching.Service) fiber.Handler {
+// GetProducts returns a http handler to return the products. I
+// f a query param "q" is passed it will filter the products using the given values
+func GetProducts(service listing.Service) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-
+		// parse request
 		term := ctx.Query("q")
-		prods, err := service.Search(ctx.Context(), term)
+
+		// service call
+		prods, err := service.List(ctx.Context(), term)
+
+		// parse response
 		if err != nil {
-			if errors.Is(err, searching.ErrEmptyTerm) {
-				return ctx.
-					Status(http.StatusBadRequest).
-					JSON(ErrorResponse{
-						Error: err.Error(),
-					})
-			}
 			log.WithError(err).Error("Can't get products from DB :(")
 			return ctx.
 				Status(http.StatusInternalServerError).
 				JSON(internalErrorResponse)
 		}
-
 		res := parseProductsList(prods)
 		return ctx.
 			Status(http.StatusOK).

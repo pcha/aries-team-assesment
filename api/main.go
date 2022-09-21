@@ -8,7 +8,6 @@ import (
 	"github.com/software-advice/aries-team-assessment/internal/platform/routes"
 	"github.com/software-advice/aries-team-assessment/internal/products/creation"
 	"github.com/software-advice/aries-team-assessment/internal/products/listing"
-	"github.com/software-advice/aries-team-assessment/internal/products/searching"
 	"github.com/software-advice/aries-team-assessment/internal/users"
 	"github.com/software-advice/aries-team-assessment/internal/users/login"
 	"github.com/software-advice/aries-team-assessment/internal/users/signup"
@@ -81,7 +80,6 @@ func main() {
 	tokenRenewService := tokenrenew.BuildService(tokenGenerationService)
 	productCreationService := creation.BuildService(productsRepository)
 	productsListingService := listing.BuildService(productsRepository)
-	productsSearchService := searching.BuildService(productsRepository)
 
 	verifyTokenMiddleware := routes.VerifyToken(tokenValidationService)
 
@@ -94,9 +92,8 @@ func main() {
 	app.Post("/users/login", routes.Login(usersLoginService))
 	app.Post("/users/token/renew", verifyTokenMiddleware, routes.RenewToken(tokenRenewService))
 	products := app.Group("/products", verifyTokenMiddleware)
-	products.Get("/", routes.GetAllProducts(productsListingService))
 	products.Post("/", routes.CreateProduct(productCreationService))
-	products.Get("/search", routes.SearchProducts(productsSearchService))
+	products.Get("/", routes.GetProducts(productsListingService))
 	err := app.Listen(":3000")
 	if err != nil {
 		log.WithError(err).Fatal("Something went wrong starting server in port 3000")

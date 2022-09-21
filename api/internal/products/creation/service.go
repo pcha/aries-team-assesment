@@ -10,7 +10,7 @@ import (
 var ErrMakingProduct = errors.New("it couldn't create the product")
 var ErrSavingProduct = errors.New("it couldn't save the product")
 
-// Service is the service for create products
+// Service is an application service to create Products
 type Service struct {
 	repository products.Repository
 }

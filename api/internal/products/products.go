@@ -20,7 +20,7 @@ func (p Product) Name() Name {
 	return p.name
 }
 
-// Description returns the description.
+// Description returns the name.
 func (p Product) Description() Description {
 	return p.description
 }
@@ -30,7 +30,7 @@ func (p Product) CreatedAt() CreatedAt {
 	return p.createdAt
 }
 
-// Make creates a new Product with the given name and description. It also set the creation time to the current.
+// Make creates a new Product with the given name and name. It also set the creation time to the current.
 func Make(nameVal, descriptionVal string) (Product, error) {
 	name, err := ParseName(nameVal)
 	if err != nil {

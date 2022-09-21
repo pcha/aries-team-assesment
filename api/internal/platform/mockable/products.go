@@ -11,12 +11,6 @@ type ProductRepository struct {
 	mock.Mock
 }
 
-// GetAll mocks the query of all products
-func (p *ProductRepository) GetAll(ctx context.Context) ([]products.Product, error) {
-	args := p.Called(ctx)
-	return args.Get(0).([]products.Product), args.Error(1)
-}
-
 func (p *ProductRepository) Search(ctx context.Context, term string) ([]products.Product, error) {
 	args := p.Called(ctx, term)
 	return args.Get(0).([]products.Product), args.Error(1)

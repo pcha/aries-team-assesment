@@ -1,30 +1,24 @@
 package users
 
 import (
-	"errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// PasswordHash is the object value to represent a hashed password
 type PasswordHash struct {
 	val []byte
 }
 
+// Bytes return the []bite representation of the PasswordHash
 func (h PasswordHash) Bytes() []byte {
 	return h.val
 }
 
+// MakePasswordHash hashes tries to hash the given Password
 func MakePasswordHash(password Password) (PasswordHash, error) {
 	hash, err := bcrypt.GenerateFromPassword(password.Bytes(), bcrypt.DefaultCost)
 	if err != nil {
 		return PasswordHash{}, err
 	}
 	return PasswordHash{val: hash}, nil
-}
-
-func ParsePasswordHash(val []byte) (PasswordHash, error) {
-	if len(val) == 0 {
-		return PasswordHash{}, errors.New("passowrd hash can't be empty")
-	}
-
-	return PasswordHash{val: val}, nil
 }
