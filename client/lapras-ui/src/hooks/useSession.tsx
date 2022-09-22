@@ -1,6 +1,6 @@
 import {useCookies} from "react-cookie";
 import {useEffect, useState} from "react";
-import {ApiUrl} from "../etc/constants";
+import {ApiUrl, MinutesToRenewToken} from "../etc/constants";
 
 // Contains session related states and function
 export type Session = {
@@ -108,7 +108,7 @@ function useSession(): Session {
         // In the first render the token in renewed to avoid expiration, so the renovation will be already scheduled.
         // Also, if the token is empty, it does not make sense to schedule a renovation
         if (!firstRender && cookies.token) {
-            setTimeout(renewToken, 13 * 60 * 1000) // renew token in 13 minutes
+            setTimeout(renewToken, MinutesToRenewToken * 60 * 1000) // renew token in 13 minutes
         }
     }, [cookies.token])
 

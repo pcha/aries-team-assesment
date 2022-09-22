@@ -2,6 +2,7 @@ import {AppBar, Box, Toolbar, Typography} from "@mui/material";
 import FilterBar from "./FilterBar";
 import UserArea from "./UserArea";
 import {Session} from "../../hooks/useSession";
+import {AppName} from "../../etc/constants";
 
 /**
  * Header (App Bar) component with the filter bar and the logged in area
@@ -17,7 +18,7 @@ function Header(props: { session: Session, handleFilter: (term: string) => void 
         <AppBar position="fixed">
             <Toolbar>
                 <Typography variant="h6" component="div" sx={{flexGrow: 0.2}}>
-                    LAPRAS
+                    {AppName}
                 </Typography>
                 {props.session.isLoggedIn ?
                     <FilterBar handleFilter={props.handleFilter} sx={{flexGrow: 0.6}}/> : ""}
