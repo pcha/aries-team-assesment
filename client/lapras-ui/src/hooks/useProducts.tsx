@@ -46,9 +46,6 @@ function useProducts (session: Session): [Product[], (filter:string)=>void, (nam
                     case 401:
                         session.logOut
                         break
-                    case 500:
-                    default:
-                        res.json().then((body) => alert(body.error))
                 }
             })
     }

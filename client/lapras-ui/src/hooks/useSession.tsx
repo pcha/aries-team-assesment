@@ -99,7 +99,7 @@ function useSession(): Session {
     useEffect(() => {
         // mark the first render as executed
         setFirstRender(false)
-        // If there is a token on a first render I don not  know when it will expire, so it forces a renovation
+        // If there is a token on a first render I do not know when it will expire, so it forces a renovation
         renewToken()
     }, [])
 
