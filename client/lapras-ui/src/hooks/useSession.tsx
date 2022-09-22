@@ -118,7 +118,7 @@ function useSession(): Session {
         username: username,
         isLoggedIn: loggedIn,
         logIn: logIn, //executes log In
-        logOut: logOut, //executer log out
+        logOut: logOut, //executes log out
         loginResultMessage: loginResultMessage
     }
 }
