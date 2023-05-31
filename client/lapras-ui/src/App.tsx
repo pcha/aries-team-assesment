@@ -1,12 +1,12 @@
 import './App.css'
-
-function App() {
-
-  return (
-    <div className="App">
-        <h2>Larpas</h2>
-    </div>
-  )
-}
+import Content from "./components/Content";
 
 export default App
+
+function App() {
+    return (
+        <div className="App" style={{overflow: "hidden"}}>
+            <Content/>
+        </div>
+    );
+}
